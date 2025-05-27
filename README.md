@@ -66,7 +66,7 @@ This lab continues building an Active Directory environment in Azure. We'll prom
 <br />
 
 <p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Remote Desktop"/>
+<img src="https://i.imgur.com/OcClSys.png" height="80%" width="80%" alt="Remote Desktop"/>
 </p>
 <p>
 <b>Part 2: Enable Remote Desktop Access for Domain Users</b><br />
@@ -81,16 +81,65 @@ This lab continues building an Active Directory environment in Azure. We'll prom
 <br />
 
 <p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="PowerShell Script"/>
+<img src="https://i.imgur.com/E3KbgER.png" height="80%" width="80%" alt="PowerShell Script"/>
 </p>
 <p>
 <b>Create Multiple Users Using PowerShell</b><br />
 <ul>
   <li>Login to DC-1 as <b>jane_admin</b></li>
   <li>Open <b>PowerShell ISE</b> as Administrator</li>
-  <li>Paste and run your bulk user creation script</li>
+  <li>Paste and run your bulk user creation script to create 1,000 users</li>
+  <pre>
+<code class="language-powershell">
+# ----- Edit these Variables for your own Use Case ----- #
+$PASSWORD_FOR_USERS   = "Password1"
+$NUMBER_OF_ACCOUNTS_TO_CREATE = 10000
+# ------------------------------------------------------ #
+
+Function generate-random-name() {
+    $consonants = @('b','c','d','f','g','h','j','k','l','m','n','p','q','r','s','t','v','w','x','z')
+    $vowels = @('a','e','i','o','u','y')
+    $nameLength = Get-Random -Minimum 3 -Maximum 7
+    $count = 0
+    $name = ""
+
+    while ($count -lt $nameLength) {
+        if ($($count % 2) -eq 0) {
+            $name += $consonants[$(Get-Random -Minimum 0 -Maximum $($consonants.Count - 1))]
+        }
+        else {
+            $name += $vowels[$(Get-Random -Minimum 0 -Maximum $($vowels.Count - 1))]
+        }
+        $count++
+    }
+
+    return $name
+}
+
+$count = 1
+while ($count -lt $NUMBER_OF_ACCOUNTS_TO_CREATE) {
+    $firstName = generate-random-name
+    $lastName = generate-random-name
+    $username = $firstName + '.' + $lastName
+    $password = ConvertTo-SecureString $PASSWORD_FOR_USERS -AsPlainText -Force
+
+    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan
+    
+    New-AdUser -AccountPassword $password `
+               -GivenName $firstName `
+               -Surname $lastName `
+               -DisplayName $username `
+               -Name $username `
+               -EmployeeID $username `
+               -PasswordNeverExpires $true `
+               -Path "ou=_EMPLOYEES,$(([ADSI]'').distinguishedName)" `
+               -Enabled $true
+    $count++
+}
+</code>
+</pre>
   <li>Observe user accounts being created in <b>_EMPLOYEES</b> OU</li>
-  <li>Try logging into Client-1 as one of the new users (check the password in script)</li>
+  <li>Try logging into Client-1 as one of the new users (check the password in the script)</li>
 </ul>
 </p>
 <br />
